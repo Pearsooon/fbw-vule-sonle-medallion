@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Warehouse",
+    "displayName": "wh-vule-sonle-WWI-medallion",
+    "description": "Source of WWI"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "d2618561-7a11-a684-4b62-20b21df0b4f3"
+  }
+}
