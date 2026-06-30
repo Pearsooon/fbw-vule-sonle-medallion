@@ -1,0 +1,416 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Get_config').output.value",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "IfCondition",
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(item().load_type, 'full')",
+                  "type": "Expression"
+                },
+                "ifTrueActivities": [
+                  {
+                    "type": "Copy",
+                    "typeProperties": {
+                      "source": {
+                        "type": "DataWarehouseSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n    'SELECT ',\n    item().column_list,\n    ' FROM [',\n    item().source_schema,\n    '].[',\n    item().source_table,\n    ']'\n)",
+                          "type": "Expression"
+                        },
+                        "partitionOption": "None",
+                        "queryTimeout": "02:00:00",
+                        "additionalColumns": [
+                          {
+                            "name": "source_id",
+                            "value": {
+                              "value": "@item().source_system",
+                              "type": "Expression"
+                            }
+                          },
+                          {
+                            "name": "audit_ts",
+                            "value": {
+                              "value": "@utcNow()",
+                              "type": "Expression"
+                            }
+                          }
+                        ],
+                        "datasetSettings": {
+                          "type": "DataWarehouseTable",
+                          "schema": [],
+                          "linkedService": {
+                            "name": "wh_vule_sonle_medallion",
+                            "properties": {
+                              "type": "DataWarehouse",
+                              "typeProperties": {
+                                "artifactId": "833bd2ca-260f-8eea-49e4-0301f78a2ce3",
+                                "endpoint": "wsyompdu3lbudckvurevtnzk24-hgx4l5qmhj5uhiymdbr36py5pm.datawarehouse.fabric.microsoft.com",
+                                "workspaceId": "00000000-0000-0000-0000-000000000000"
+                              },
+                              "annotations": []
+                            }
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "sink": {
+                        "type": "ParquetSink",
+                        "formatSettings": {
+                          "type": "ParquetWriteSettings",
+                          "enableVertiParquet": true
+                        },
+                        "storeSettings": {
+                          "type": "AzureBlobStorageWriteSettings"
+                        },
+                        "datasetSettings": {
+                          "type": "Parquet",
+                          "typeProperties": {
+                            "location": {
+                              "type": "LakehouseLocation",
+                              "folderPath": {
+                                "value": "@concat('Bronze/', item().source_system, '/', item().source_object, '/year=', formatDateTime(utcNow(), 'yyyy'), '/month=', formatDateTime(utcNow(), 'MM'), '/day=', formatDateTime(utcNow(), 'dd'))",
+                                "type": "Expression"
+                              },
+                              "fileName": {
+                                "value": "@concat(item().source_table, '_', formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'), '.parquet')",
+                                "type": "Expression"
+                              }
+                            },
+                            "compressionCodec": "snappy"
+                          },
+                          "schema": [],
+                          "linkedService": {
+                            "name": "lh_vule_sonle_medallion",
+                            "properties": {
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "artifactId": "babe97ee-fffd-a645-4344-dd57ad85bd8b",
+                                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                                "rootFolder": "Files"
+                              },
+                              "annotations": []
+                            }
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      },
+                      "enableStaging": false
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "full load",
+                    "dependsOn": []
+                  }
+                ],
+                "ifFalseActivities": [
+                  {
+                    "type": "Lookup",
+                    "typeProperties": {
+                      "source": {
+                        "type": "SqlServerSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n    'SELECT ISNULL(MAX(timestamp), ''1900-01-01'') AS last_wm ',\n    'FROM [lh_vule_sonle_medallion].[etl].[watermark] ',\n    'WHERE object_name = ''', item().source_object, ''' ',\n    'AND layer = ''bronze'''\n)",
+                          "type": "Expression"
+                        },
+                        "partitionOption": "None",
+                        "queryTimeout": "02:00:00"
+                      },
+                      "datasetSettings": {
+                        "type": "SqlServerTable",
+                        "typeProperties": {
+                          "database": "lh_vule_sonle_medallion"
+                        },
+                        "schema": [],
+                        "externalReferences": {
+                          "connection": "d92f2169-04bc-42f0-bbc1-f5827e7c4517"
+                        },
+                        "annotations": []
+                      },
+                      "firstRowOnly": true
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "last_wm",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "Lookup",
+                    "typeProperties": {
+                      "source": {
+                        "type": "DataWarehouseSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n  'SELECT ISNULL(MAX([', item().watermark_column, ']), ''1900-01-01'') AS new_wm ',\n  'FROM [', item().source_schema, '].[', item().source_table, ']'\n)",
+                          "type": "Expression"
+                        },
+                        "partitionOption": "None",
+                        "queryTimeout": "02:00:00"
+                      },
+                      "datasetSettings": {
+                        "type": "DataWarehouseTable",
+                        "schema": [],
+                        "linkedService": {
+                          "name": "wh_vule_sonle_medallion",
+                          "properties": {
+                            "type": "DataWarehouse",
+                            "typeProperties": {
+                              "artifactId": "833bd2ca-260f-8eea-49e4-0301f78a2ce3",
+                              "endpoint": "wsyompdu3lbudckvurevtnzk24-hgx4l5qmhj5uhiymdbr36py5pm.datawarehouse.fabric.microsoft.com",
+                              "workspaceId": "00000000-0000-0000-0000-000000000000"
+                            },
+                            "annotations": []
+                          }
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "source_wm",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "Copy",
+                    "typeProperties": {
+                      "source": {
+                        "type": "DataWarehouseSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n  'SELECT ',\n  item().column_list,\n  ' FROM [',\n  item().source_schema,\n  '].[',\n  item().source_table,\n  '] WHERE [',\n  item().watermark_column,\n  '] > ''',\n  activity('last_wm').output.firstRow.last_wm,\n  ''' AND [',\n  item().watermark_column,\n  '] <= ''',\n  activity('source_wm').output.firstRow.new_wm,\n  ''''\n)",
+                          "type": "Expression"
+                        },
+                        "partitionOption": "None",
+                        "queryTimeout": "02:00:00",
+                        "additionalColumns": [
+                          {
+                            "name": "source_id",
+                            "value": {
+                              "value": "@item().source_system",
+                              "type": "Expression"
+                            }
+                          },
+                          {
+                            "name": "audit_ts",
+                            "value": {
+                              "value": "@utcNow()",
+                              "type": "Expression"
+                            }
+                          }
+                        ],
+                        "datasetSettings": {
+                          "type": "DataWarehouseTable",
+                          "schema": [],
+                          "linkedService": {
+                            "name": "wh_vule_sonle_medallion",
+                            "properties": {
+                              "type": "DataWarehouse",
+                              "typeProperties": {
+                                "artifactId": "833bd2ca-260f-8eea-49e4-0301f78a2ce3",
+                                "endpoint": "wsyompdu3lbudckvurevtnzk24-hgx4l5qmhj5uhiymdbr36py5pm.datawarehouse.fabric.microsoft.com",
+                                "workspaceId": "00000000-0000-0000-0000-000000000000"
+                              },
+                              "annotations": []
+                            }
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "sink": {
+                        "type": "ParquetSink",
+                        "formatSettings": {
+                          "type": "ParquetWriteSettings",
+                          "enableVertiParquet": true
+                        },
+                        "storeSettings": {
+                          "type": "AzureBlobStorageWriteSettings"
+                        },
+                        "datasetSettings": {
+                          "type": "Parquet",
+                          "typeProperties": {
+                            "location": {
+                              "type": "LakehouseLocation",
+                              "folderPath": {
+                                "value": "@concat('Bronze/', item().source_system, '/', item().source_object, '/year=', formatDateTime(utcNow(), 'yyyy'), '/month=', formatDateTime(utcNow(), 'MM'), '/day=', formatDateTime(utcNow(), 'dd'))",
+                                "type": "Expression"
+                              },
+                              "fileName": {
+                                "value": "@concat(item().source_table, '_', formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'), '.parquet')",
+                                "type": "Expression"
+                              }
+                            },
+                            "compressionCodec": "snappy"
+                          },
+                          "schema": [],
+                          "linkedService": {
+                            "name": "lh_vule_sonle_medallion",
+                            "properties": {
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "artifactId": "babe97ee-fffd-a645-4344-dd57ad85bd8b",
+                                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                                "rootFolder": "Files"
+                              },
+                              "annotations": []
+                            }
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      },
+                      "enableStaging": false
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "delta ingest",
+                    "dependsOn": [
+                      {
+                        "activity": "last_wm",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      },
+                      {
+                        "activity": "source_wm",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "TridentNotebook",
+                    "typeProperties": {
+                      "notebookId": "102f52cb-073f-88f5-45a4-181ccb282323",
+                      "workspaceId": "00000000-0000-0000-0000-000000000000",
+                      "parameters": {
+                        "object_name": {
+                          "value": "",
+                          "type": "string"
+                        },
+                        "watermark_value": {
+                          "value": "",
+                          "type": "string"
+                        },
+                        "layer_value": {
+                          "value": "",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "set_watermark",
+                    "dependsOn": [
+                      {
+                        "activity": "delta ingest",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "name": "Ingest_condition",
+              "dependsOn": []
+            }
+          ]
+        },
+        "name": "Table_loop",
+        "dependsOn": [
+          {
+            "activity": "Get_config",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "SqlServerSource",
+            "sqlReaderQuery": {
+              "value": "@if(\n    equals(pipeline().parameters.SourceObject, 'ALL'),\n    'SELECT * FROM [etl].[config_tables] WHERE layer = ''Bronze'' AND is_active = 1',\n    concat(\n        'SELECT * FROM [etl].[config_tables] WHERE layer = ''Bronze'' AND is_active = 1 AND source_object = ''',\n        pipeline().parameters.SourceObject,\n        ''''\n    )\n)",
+              "type": "Expression"
+            },
+            "partitionOption": "None",
+            "queryTimeout": "02:00:00"
+          },
+          "datasetSettings": {
+            "type": "SqlServerTable",
+            "schema": [],
+            "externalReferences": {
+              "connection": "d92f2169-04bc-42f0-bbc1-f5827e7c4517"
+            },
+            "annotations": []
+          },
+          "firstRowOnly": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Get_config",
+        "dependsOn": []
+      }
+    ],
+    "parameters": {
+      "SourceObject": {
+        "type": "string",
+        "defaultValue": "ALL"
+      }
+    }
+  }
+}

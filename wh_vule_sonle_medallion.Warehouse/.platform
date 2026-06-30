@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Warehouse",
+    "displayName": "wh_vule_sonle_medallion",
+    "description": ""
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "833bd2ca-260f-8eea-49e4-0301f78a2ce3"
+  }
+}

@@ -8,12 +8,12 @@
 -- META   },
 -- META   "dependencies": {
 -- META     "lakehouse": {
--- META       "default_lakehouse": "233f4c6f-57c9-4c54-bea6-60a9126b4070",
+-- META       "default_lakehouse": "ad85bd8b-dd57-4344-a645-fffdbabe97ee",
 -- META       "default_lakehouse_name": "lh_vule_sonle_medallion",
--- META       "default_lakehouse_workspace_id": "174d659d-2d6e-4d9f-86df-19eba8ef09a7",
+-- META       "default_lakehouse_workspace_id": "f6c5af39-3a0c-437b-a30c-1863bf3f1d7b",
 -- META       "known_lakehouses": [
 -- META         {
--- META           "id": "233f4c6f-57c9-4c54-bea6-60a9126b4070"
+-- META           "id": "ad85bd8b-dd57-4344-a645-fffdbabe97ee"
 -- META         }
 -- META       ]
 -- META     }
