@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 4 Setup Guide — Connect to Fabric Warehouse &amp; Lakehouse (nrn-academy)</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --panel:#121826;
+    --panel-2:#0f1420;
+    --border:#23304a;
+    --text:#e7ecf5;
+    --text-dim:#9fb0c9;
+    --azure:#1e6dbf;
+    --azure-2:#3a8ee6;
+    --fabric:#217346;
+    --fabric-2:#3aa66c;
+    --queue:#c97f00;
+    --storage:#0078D4;
+    --good:#2e7d32;
+    --warn:#b45309;
+    --danger:#c0392b;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: "Segoe UI", -apple-system, "Inter", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:linear-gradient(180deg,#0a0d12,#0b0f14 400px);color:var(--text);line-height:1.6;font-size:15.5px;}
+  a{color:var(--azure-2);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  code, .code-inline{font-family:var(--mono);background:#1a2230;border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-size:.88em;color:#ffd479;white-space:nowrap;}
+  pre{font-family:var(--mono);background:#0d1119;border:1px solid var(--border);border-radius:8px;padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;color:#cfe3ff;}
+  pre code{background:none;border:none;padding:0;white-space:pre;color:inherit;}
+
+  .shell{display:flex;max-width:1400px;margin:0 auto;}
+  .toc{width:268px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;padding:28px 18px 60px 24px;border-right:1px solid var(--border);}
+  .toc-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin:0 0 14px 0;font-weight:700;}
+  .toc a{display:block;color:var(--text-dim);font-size:13.5px;padding:6px 10px;border-radius:6px;margin-bottom:1px;}
+  .toc a:hover{background:#16202f;color:var(--text);text-decoration:none;}
+  .toc a.phase-link{color:#cfe3ff;font-weight:600;margin-top:14px;}
+  .toc .sub{padding-left:22px;font-size:12.8px;}
+
+  .main{flex:1;min-width:0;padding:0 0 80px 0;}
+  .container{max-width:980px;margin:0 auto;padding:0 48px;}
+
+  .hero{padding:56px 48px 40px;border-bottom:1px solid var(--border);
+    background:
+      radial-gradient(ellipse 700px 300px at 15% -10%, rgba(33,115,70,.25), transparent 60%),
+      radial-gradient(ellipse 600px 280px at 100% 0%, rgba(30,109,191,.18), transparent 60%);
+  }
+  .hero-inner{max-width:980px;margin:0 auto;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--fabric-2);font-weight:700;margin-bottom:14px;}
+  h1{font-size:30px;margin:0 0 12px;line-height:1.25;letter-spacing:-.01em;}
+  .hero p.lead{color:var(--text-dim);font-size:16px;max-width:680px;margin:0 0 22px;}
+  .hero-meta{display:flex;gap:10px;flex-wrap:wrap;}
+  .pill{font-size:12.5px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:#121826;color:var(--text-dim);}
+  .pill strong{color:var(--text);}
+
+  h2{font-size:23px;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;scroll-margin-top:20px;}
+  h3{font-size:18px;margin:30px 0 12px;color:#f1f5fb;scroll-margin-top:20px;}
+  h4{font-size:15px;margin:20px 0 8px;color:#dbe6f5;}
+  p{margin:0 0 14px;}
+  ul,ol{margin:0 0 16px;padding-left:22px;}
+  li{margin-bottom:6px;}
+  .step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--azure);color:#fff;font-weight:700;font-size:12.5px;flex-shrink:0;}
+
+  .service-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;text-transform:uppercase;letter-spacing:.04em;}
+  .badge-azure{background:rgba(30,109,191,.18);color:#7cb6f0;border:1px solid rgba(30,109,191,.4);}
+  .badge-fabric{background:rgba(33,115,70,.18);color:#7fd29c;border:1px solid rgba(33,115,70,.4);}
+  .badge-existing{background:rgba(255,255,255,.06);color:#b9c4d6;border:1px solid var(--border);}
+  .badge-create{background:rgba(201,127,0,.15);color:#f0b558;border:1px solid rgba(201,127,0,.35);}
+  .badge-free{background:rgba(46,125,50,.18);color:#7fd29c;border:1px solid rgba(46,125,50,.4);}
+  .badge-paid{background:rgba(192,57,43,.16);color:#ef8a7d;border:1px solid rgba(192,57,43,.4);}
+  .badge-outofscope{background:rgba(255,255,255,.04);color:#7d8aa0;border:1px dashed var(--border);}
+  .badge-branch{background:rgba(58,142,230,.18);color:#7cb6f0;border:1px solid rgba(58,142,230,.4);}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin:18px 0;}
+  .card-flow{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin:16px 0;}
+  .note{border-left:3px solid var(--azure-2);background:rgba(30,109,191,.08);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14.5px;}
+  .note strong{color:#9fd0ff;}
+  .warn-box{border-left:3px solid var(--warn);background:rgba(180,83,9,.1);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14.5px;}
+  .warn-box strong{color:#f3b566;}
+  .cost-box{border-left:3px solid var(--good);background:rgba(46,125,50,.08);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14.5px;}
+  .cost-box strong{color:#7fd29c;}
+  .danger-box{border-left:3px solid var(--danger);background:rgba(192,57,43,.1);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14.5px;}
+  .danger-box strong{color:#ef8a7d;}
+  .fabric-box{border-left:3px solid var(--fabric-2);background:rgba(33,115,70,.08);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14.5px;}
+  .fabric-box strong{color:#7fd29c;}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#161e2c;color:#cfe3ff;font-weight:600;font-size:13px;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  td code{white-space:normal;}
+
+  .checklist{list-style:none;padding-left:0;}
+  .checklist li{padding:8px 12px 8px 36px;position:relative;border-bottom:1px solid var(--border);margin-bottom:0;}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist li::before{content:"☐";position:absolute;left:8px;top:7px;color:var(--text-dim);font-size:16px;}
+
+  .phase-divider{margin:64px 0 0;padding:34px 0 14px;border-top:2px solid var(--fabric-2);position:relative;}
+  .phase-divider .phase-tag{position:absolute;top:-15px;left:0;background:var(--bg);padding:0 14px 0 0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--fabric-2);font-weight:700;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width: 800px){.grid-2{grid-template-columns:1fr;}}
+
+  .resource-name{font-family:var(--mono);font-size:13px;color:#ffd479;}
+
+  .total-banner{background:linear-gradient(135deg, rgba(33,115,70,.18), rgba(30,109,191,.12));border:1px solid rgba(33,115,70,.35);border-radius:12px;padding:24px 26px;margin:24px 0;}
+  .total-banner .big{font-size:30px;font-weight:700;color:#7fd29c;}
+  .total-banner .small{color:var(--text-dim);font-size:13.5px;}
+
+  .progress-strip{display:flex;gap:8px;margin:20px 0 0;flex-wrap:wrap;}
+  .progress-step{flex:1;min-width:120px;border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--panel-2);font-size:13px;}
+  .progress-step .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--fabric-2);color:#fff;font-size:11px;font-weight:700;margin-right:6px;}
+  .progress-step .label{color:var(--text-dim);}
+
+  /* branch diagram for file type routing */
+  .branch-diagram{display:flex;flex-direction:column;gap:10px;padding:20px;background:var(--panel-2);border:1px solid var(--border);border-radius:12px;margin:16px 0;}
+  .branch-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .branch-node{padding:9px 13px;border-radius:8px;font-size:12.5px;font-weight:600;color:#fff;min-width:80px;text-align:center;}
+  .branch-node.in{background:#555;}
+  .branch-node.ok{background:var(--good);}
+  .branch-node.bad{background:var(--danger);}
+  .branch-node.proc{background:var(--azure);}
+  .branch-arrow{color:var(--text-dim);font-size:13px;}
+
+  footer{border-top:1px solid var(--border);padding:30px 48px;text-align:center;color:var(--text-dim);font-size:13px;}
+
+  @media (max-width: 980px){
+    .toc{display:none;}
+    .container, .hero{padding-left:24px;padding-right:24px;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ===================== SIDEBAR TOC ===================== -->
+  <nav class="toc">
+    <p class="toc-title">Mục lục</p>
+    <a href="#overview">Tổng quan Phase 4</a>
+    <a href="#filetype">Xử lý loại file (CSV/Excel vs PDF khác)</a>
+    <a href="#prereq">Chuẩn bị</a>
+
+    <a class="phase-link" href="#task1">Task 1 — Fabric Service Principal</a>
+    <a class="sub" href="#setup-spn">Tạo App Registration + cấp quyền Fabric</a>
+
+    <a class="phase-link" href="#task2">Task 2 — Data Lake Adapter → Warehouse</a>
+    <a class="sub" href="#detect-filetype">Detect loại file + quarantine</a>
+    <a class="sub" href="#parse-csv-excel">Parse CSV/Excel thật</a>
+    <a class="sub" href="#write-warehouse">Ghi vào wh-vule-sonle-WWI-medallion</a>
+
+    <a class="phase-link" href="#task3">Task 3 — Consumer → Lakehouse</a>
+    <a class="sub" href="#query-lakehouse">Query lh_vule_sonle_medallion</a>
+
+    <a class="phase-link" href="#test">Kiểm thử end-to-end toàn kiến trúc</a>
+
+    <a class="phase-link" href="#cost">💰 Cost Phase 4</a>
+    <a class="sub" href="#cost-table">Bảng cost theo service</a>
+    <a class="sub" href="#cost-guardrails">Guardrail</a>
+
+    <a class="phase-link" href="#checklist">✅ Checklist toàn kiến trúc</a>
+  </nav>
+
+  <!-- ===================== MAIN CONTENT ===================== -->
+  <main class="main">
+
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="eyebrow">nrn-academy &middot; Azure Integration Architecture — Phase 4 (Final)</div>
+        <h1>Phase 4: Kết nối Data Lake Adapter vào Warehouse &amp; Consumer vào Lakehouse</h1>
+        <p class="lead">
+          Phase cuối cùng — nối 2 đầu còn thiếu của toàn kiến trúc: Data Lake Adapter parse file CSV/Excel
+          thật và ghi vào Fabric Warehouse <code>wh-vule-sonle-WWI-medallion</code> (đóng vai trò SQL SIT/STT),
+          và Consumer Function query dữ liệu thật từ Lakehouse <code>lh_vule_sonle_medallion</code> để trả về
+          Email/Push. Cả hai dùng SQL connection string xác thực qua Service Principal.
+        </p>
+        <div class="hero-meta">
+          <span class="pill">Resource Group: <strong>nrn-academy-rg-dev</strong></span>
+          <span class="pill">Warehouse: <strong>wh-vule-sonle-WWI-medallion</strong></span>
+          <span class="pill">Lakehouse: <strong>lh_vule_sonle_medallion</strong></span>
+          <span class="pill">Auth Fabric: <strong>Active Directory Service Principal</strong></span>
+        </div>
+
+        <div class="progress-strip">
+          <div class="progress-step"><span class="num">1</span><span class="label">Service Principal</span></div>
+          <div class="progress-step"><span class="num">2</span><span class="label">Adapter → Warehouse</span></div>
+          <div class="progress-step"><span class="num">3</span><span class="label">Consumer → Lakehouse</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <h2 id="overview">📐 Tổng quan Phase 4</h2>
+      <p>
+        Đây là phase kết nối toàn bộ kiến trúc thành 1 luồng hoàn chỉnh end-to-end. Hai việc chính:
+      </p>
+      <ol>
+        <li><strong>Data Lake Adapter (Flow 1):</strong> thay vì chỉ pull blob và log như Phase 2, giờ Adapter
+          phải <strong>detect loại file</strong>, parse nội dung CSV/Excel thành dữ liệu có cấu trúc, và ghi
+          vào Fabric Warehouse (SIT/STT) <code>wh-vule-sonle-WWI-medallion</code>.</li>
+        <li><strong>Consumer (Flow 2):</strong> thay vì chỉ log placeholder như Phase 3, giờ Consumer
+          <strong>query dữ liệu thật</strong> từ Lakehouse <code>lh_vule_sonle_medallion</code> để đưa vào nội
+          dung Email/Push.</li>
+      </ol>
+
+      <div class="card-flow">
+        <h4 style="margin-top:0;">Luồng dữ liệu hoàn chỉnh sau Phase 4</h4>
+        <p style="font-size:14px;color:var(--text-dim);margin-bottom:0;">
+          SharePoint → Logic App → Storage Account → Event Grid → APIM → <strong>Data Lake Adapter (parse +
+          write Warehouse)</strong> &nbsp;|&nbsp; External System → APIM → Publisher → Service Bus →
+          <strong>Consumer (query Lakehouse)</strong> → Email (ACS) + Push (Notification Hubs)
+        </p>
+      </div>
+
+      <h2 id="filetype">📄 Xử lý loại file: CSV/Excel hợp lệ vs file khác (PDF...)</h2>
+      <p>
+        Theo phạm vi đã chốt, Data Lake Adapter chỉ xử lý dữ liệu có cấu trúc (CSV, Excel). Các loại file khác
+        (PDF, Word, ảnh...) không nằm trong khả năng parse hiện tại — Adapter sẽ <strong>detect loại file ngay
+        từ đầu</strong> và rẽ nhánh: hợp lệ thì xử lý tiếp, không hợp lệ thì <strong>quarantine</strong> (chuyển
+        vào khu vực riêng + log) thay vì cố xử lý hoặc làm crash pipeline.
+      </p>
+
+      <div class="branch-diagram">
+        <div class="branch-row">
+          <div class="branch-node in">Blob nhận từ<br>Event Grid</div>
+          <span class="branch-arrow">→</span>
+          <div class="branch-node proc">Detect content-type<br>+ extension</div>
+        </div>
+        <div class="branch-row" style="padding-left:40px;">
+          <span class="branch-arrow">├─ .csv / .xlsx / .xls →</span>
+          <div class="branch-node ok">Parse thật<br>(CsvHelper / ClosedXML)</div>
+          <span class="branch-arrow">→</span>
+          <div class="branch-node ok">Ghi vào<br>Warehouse SIT/STT</div>
+        </div>
+        <div class="branch-row" style="padding-left:40px;">
+          <span class="branch-arrow">└─ .pdf / .docx / khác →</span>
+          <div class="branch-node bad">Quarantine<br>(container riêng + log)</div>
+          <span class="branch-arrow">→</span>
+          <div class="branch-node bad">Trả 200 OK<br>(không retry vô hạn)</div>
+        </div>
+      </div>
+
+      <div class="fabric-box">
+        <strong>Vì sao quarantine mà vẫn trả <code>200 OK</code> cho file không hỗ trợ:</strong> nếu Adapter
+        trả lỗi <code>4xx/5xx</code> cho file PDF, APIM/Event Grid có thể retry nhiều lần một cách vô nghĩa (vì
+        file đó vẫn sẽ luôn fail). Trả <code>200 OK</code> kèm log rõ "file type not supported, moved to
+        quarantine" giúp dừng retry, đồng thời không làm mất dấu file — vẫn có thể xử lý thủ công hoặc mở rộng
+        thêm nhánh xử lý (OCR cho PDF, v.v.) trong tương lai nếu cần.
+      </div>
+
+      <h2 id="prereq">🧰 Chuẩn bị</h2>
+      <ul class="checklist">
+        <li>Đã hoàn thành Phase 1–3: Logic App, Storage Account relay, APIM, Service Bus, Function Adapter + Consumer, ACS, Notification Hubs đều đã chạy được.</li>
+        <li>Đã xác nhận tên chính xác: Warehouse <code>wh-vule-sonle-WWI-medallion</code>, Lakehouse <code>lh_vule_sonle_medallion</code>, cùng tên workspace Fabric chứa cả hai.</li>
+        <li>Có quyền truy cập Fabric Admin Portal (hoặc người có quyền đó) để bật setting "Service principals can use Fabric APIs" ở Task 1.</li>
+        <li>Có quyền tạo App Registration trong Microsoft Entra ID (Azure AD) của tenant.</li>
+      </ul>
+
+      <div class="phase-divider">
+        <span class="phase-tag">Task 1</span>
+      </div>
+      <h2 id="task1">🔑 Task 1 — Tạo Service Principal cho Fabric</h2>
+      <p>
+        Fabric Warehouse/Lakehouse <strong>không hỗ trợ SQL Authentication truyền thống</strong> (username/password
+        kiểu SQL Server) — chỉ hỗ trợ Microsoft Entra ID. Theo lựa chọn đã chốt, ta dùng
+        <strong>Active Directory Service Principal</strong> cho cả Data Lake Adapter và Consumer Function.
+      </p>
+
+      <h3 id="setup-spn"><span class="step-num">1</span>&nbsp; Tạo App Registration</h3>
+      <ol>
+        <li>Portal → <strong>Microsoft Entra ID</strong> → <strong>App registrations</strong> → <strong>+ New registration</strong>.</li>
+        <li>Name: <code>nrn-academy-spn-fabric-dev-{name}</code>.</li>
+        <li>Supported account types: <em>Accounts in this organizational directory only</em> (single tenant) — đủ cho nhu cầu nội bộ.</li>
+        <li>Sau khi tạo, ghi lại 3 giá trị từ trang <strong>Overview</strong>:
+          <ul>
+            <li><strong>Application (client) ID</strong></li>
+            <li><strong>Directory (tenant) ID</strong></li>
+          </ul>
+        </li>
+        <li>Vào <strong>Certificates &amp; secrets</strong> → <strong>+ New client secret</strong> → đặt expiry (ví dụ 6 tháng) → copy ngay <strong>Value</strong> (chỉ hiện 1 lần, không xem lại được sau khi rời trang).</li>
+      </ol>
+
+      <h3 id="setup-spn-tenant"><span class="step-num">2</span>&nbsp; Bật quyền Service Principal trong Fabric Admin Portal</h3>
+      <p>Đây là bước hay bị bỏ sót — nếu thiếu, mọi connection string dùng SPN sẽ fail dù mọi thứ khác đúng.</p>
+      <ol>
+        <li>Vào <a href="https://app.fabric.microsoft.com" target="_blank">app.fabric.microsoft.com</a> → biểu tượng bánh răng (Settings) → <strong>Admin portal</strong>.</li>
+        <li>Menu trái → <strong>Tenant settings</strong> → tìm mục <strong>Developer settings</strong>.</li>
+        <li>Tìm setting <strong>"Service principals can use Fabric APIs"</strong> → bật <strong>Enabled</strong> (nếu bạn không có quyền Fabric Admin, gửi yêu cầu cho người quản trị tenant bật giúp).</li>
+        <li>Tuỳ chính sách tổ chức, setting này có thể áp dụng cho toàn tenant hoặc theo security group cụ thể — nếu giới hạn theo group, cần thêm service principal vào group đó.</li>
+      </ol>
+
+      <h3 id="setup-spn-workspace"><span class="step-num">3</span>&nbsp; Cấp quyền SPN trên Workspace chứa Warehouse + Lakehouse</h3>
+      <ol>
+        <li>Vào workspace Fabric chứa <code>wh-vule-sonle-WWI-medallion</code> và <code>lh_vule_sonle_medallion</code>.</li>
+        <li>Menu trái → <strong>Manage access</strong> → <strong>+ Add people or groups</strong>.</li>
+        <li>Tìm theo tên App Registration (<code>nrn-academy-spn-fabric-dev-{name}</code>) → gán role <strong>Contributor</strong> (đủ quyền connect qua SQL connection string tới cả Warehouse và Lakehouse SQL analytics endpoint trong workspace).</li>
+      </ol>
+
+      <div class="warn-box">
+        <strong>Quyền đọc khác quyền viết:</strong> role Contributor ở cấp workspace cho phép SPN
+        <strong>kết nối và đọc</strong> (SELECT) ngay. Nhưng để Data Lake Adapter <strong>ghi (INSERT)</strong>
+        vào Warehouse, cần thêm 1 bước GRANT quyền T-SQL cụ thể — xem Task 2.3 bên dưới. Bỏ qua bước đó là
+        nguyên nhân phổ biến nhất gây lỗi "INSERT permission denied" dù SPN đã connect thành công.
+      </div>
+
+      <div class="phase-divider">
+        <span class="phase-tag">Task 2</span>
+      </div>
+      <h2 id="task2">📥 Task 2 — Data Lake Adapter: Parse file thật + ghi vào Warehouse</h2>
+      <p>
+        Mở rộng code <code>DataLakeAdapter</code> đã có từ Phase 2 (pull blob qua Blob SDK) — thêm 3 bước:
+        detect loại file, parse nội dung nếu hợp lệ, ghi vào Warehouse <code>wh-vule-sonle-WWI-medallion</code>.
+      </p>
+
+      <h3 id="detect-filetype"><span class="step-num">1</span>&nbsp; Detect loại file + nhánh quarantine</h3>
+      <ol>
+        <li>Cài thêm package SDK trong project Function App Adapter:</li>
+      </ol>
+      <pre><code>dotnet add package CsvHelper
+dotnet add package ClosedXML
+dotnet add package Microsoft.Data.SqlClient</code></pre>
+
+      <pre><code>// DataLakeAdapter.cs — Phase 4: detect + route theo loại file
+[Function("DataLakeAdapter")]
+public async Task&lt;HttpResponseData&gt; Run(
+    [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+{
+    var body = await req.ReadAsStringAsync();
+    var eventData = JsonSerializer.Deserialize&lt;IngestEventPayload&gt;(body);
+    var blobUrl = eventData?.Data?.BlobUrl;
+    var fileName = eventData?.Data?.OriginalFileName ?? "";
+    var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+    var blobClient = new BlobClient(new Uri(blobUrl), new DefaultAzureCredential());
+    using var stream = new MemoryStream();
+    await blobClient.DownloadToAsync(stream);
+    stream.Position = 0;
+
+    var supportedExtensions = new[] { ".csv", ".xlsx", ".xls" };
+
+    if (!supportedExtensions.Contains(extension))
+    {
+        _logger.LogWarning(
+            "Unsupported file type '{Ext}' for file '{FileName}' — moving to quarantine.",
+            extension, fileName);
+        await MoveToQuarantineAsync(blobClient, fileName);
+
+        // Trả 200 OK để dừng retry — file không hỗ trợ sẽ luôn fail nếu cố parse lại.
+        return req.CreateResponse(HttpStatusCode.OK);
+    }
+
+    DataTable parsedData = extension == ".csv"
+        ? ParseCsv(stream)
+        : ParseExcel(stream);
+
+    await WriteToWarehouseAsync(parsedData, fileName);
+
+    _logger.LogInformation("Processed and wrote {RowCount} rows from {FileName} to Warehouse.",
+        parsedData.Rows.Count, fileName);
+
+    return req.CreateResponse(HttpStatusCode.OK);
+}
+
+private async Task MoveToQuarantineAsync(BlobClient sourceBlob, string fileName)
+{
+    var quarantineContainer = new BlobContainerClient(
+        sourceBlob.GetParentBlobContainerClient().Uri.ToString().Replace("ingest-relay", "ingest-quarantine"),
+        new DefaultAzureCredential());
+    await quarantineContainer.CreateIfNotExistsAsync();
+
+    var destBlob = quarantineContainer.GetBlobClient(fileName);
+    await destBlob.StartCopyFromUriAsync(sourceBlob.Uri);
+}</code></pre>
+
+      <div class="note">
+        <strong>Container quarantine riêng:</strong> tạo thêm 1 container <code>ingest-quarantine</code> trong
+        Storage Account <code>nrn-academy-st-dev-{name}</code> (đã tạo ở Phase 2) — giữ tách biệt khỏi
+        <code>ingest-relay</code> để dễ rà soát file bị reject mà không lẫn với file đang chờ xử lý.
+      </div>
+
+      <h3 id="parse-csv-excel"><span class="step-num">2</span>&nbsp; Parse CSV / Excel thật</h3>
+      <pre><code>// Parse CSV bằng CsvHelper
+private DataTable ParseCsv(Stream stream)
+{
+    using var reader = new StreamReader(stream);
+    using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+    using var dataReader = new CsvDataReader(csv);
+
+    var table = new DataTable();
+    table.Load(dataReader);
+    return table;
+}
+
+// Parse Excel bằng ClosedXML — lấy sheet đầu tiên, dòng 1 là header
+private DataTable ParseExcel(Stream stream)
+{
+    using var workbook = new XLWorkbook(stream);
+    var worksheet = workbook.Worksheets.First();
+    var range = worksheet.RangeUsed();
+
+    var table = new DataTable();
+    bool firstRow = true;
+
+    foreach (var row in range.RowsUsed())
+    {
+        if (firstRow)
+        {
+            foreach (var cell in row.Cells())
+                table.Columns.Add(cell.GetString());
+            firstRow = false;
+        }
+        else
+        {
+            var dataRow = table.NewRow();
+            int colIndex = 0;
+            foreach (var cell in row.Cells())
+            {
+                dataRow[colIndex++] = cell.GetString();
+            }
+            table.Rows.Add(dataRow);
+        }
+    }
+    return table;
+}</code></pre>
+
+      <div class="warn-box">
+        <strong>Giả định cấu trúc file:</strong> code mẫu trên giả định dòng đầu tiên là header và toàn bộ giá
+        trị đọc dạng string (an toàn nhất khi chưa biết schema cố định). Nếu các file thực tế từ SharePoint có
+        schema cố định (tên cột, kiểu dữ liệu biết trước), nên thêm bước validate schema ngay sau parse — đối
+        chiếu với danh sách cột kỳ vọng, reject hoặc quarantine nếu thiếu cột bắt buộc, tương tự nhánh xử lý
+        file không hỗ trợ ở trên.
+      </div>
+
+      <h3 id="write-warehouse"><span class="step-num">3</span>&nbsp; Ghi vào Fabric Warehouse</h3>
+      <p>Lấy SQL connection string của Warehouse từ Fabric Portal:</p>
+      <ol>
+        <li>Vào workspace Fabric → mở <code>wh-vule-sonle-WWI-medallion</code> → menu <strong>Settings</strong> (hoặc nút "..." → Settings) → tab <strong>Connection strings</strong>.</li>
+        <li>Copy giá trị <strong>SQL connection string</strong> — dạng <code>xxxxx.datawarehouse.fabric.microsoft.com</code>.</li>
+      </ol>
+
+      <pre><code>// Connection string mẫu — Authentication = Active Directory Service Principal
+var connectionString =
+    "Server=tcp:xxxxx.datawarehouse.fabric.microsoft.com,1433;" +
+    "Database=wh-vule-sonle-WWI-medallion;" +
+    "Authentication=Active Directory Service Principal;" +
+    $"User Id={clientId};" +
+    $"Password={clientSecret};" +
+    "Encrypt=True;TrustServerCertificate=False;";</code></pre>
+
+      <div class="warn-box">
+        <strong>Lưu ý cú pháp:</strong> Fabric Warehouse <strong>không hỗ trợ Multiple Active Result Sets
+        (MARS)</strong> — không thêm <code>MultipleActiveResultSets=true</code> vào connection string, hoặc
+        nếu có sẵn trong template phải set về <code>false</code>/bỏ hẳn, nếu không sẽ gặp lỗi kết nối khó hiểu.
+      </div>
+
+      <pre><code>// WriteToWarehouseAsync — ghi DataTable vào staging table SIT
+private async Task WriteToWarehouseAsync(DataTable data, string sourceFileName)
+{
+    using var connection = new SqlConnection(_warehouseConnectionString);
+    await connection.OpenAsync();
+
+    foreach (DataRow row in data.Rows)
+    {
+        using var cmd = connection.CreateCommand();
+        // Ví dụ ghi vào 1 bảng staging chung — điều chỉnh tên bảng/cột theo schema thật của bạn
+        cmd.CommandText = @"
+            INSERT INTO dbo.sit_staging_raw (source_file, ingested_at, raw_row_json)
+            VALUES (@sourceFile, SYSUTCDATETIME(), @rawRowJson)";
+        cmd.Parameters.AddWithValue("@sourceFile", sourceFileName);
+        cmd.Parameters.AddWithValue("@rawRowJson", JsonSerializer.Serialize(RowToDict(row)));
+        await cmd.ExecuteNonQueryAsync();
+    }
+}
+
+private static Dictionary&lt;string, object&gt; RowToDict(DataRow row)
+{
+    var dict = new Dictionary&lt;string, object&gt;();
+    foreach (DataColumn col in row.Table.Columns)
+        dict[col.ColumnName] = row[col];
+    return dict;
+}</code></pre>
+
+      <div class="note">
+        <strong>Vì sao ghi JSON thô vào 1 cột thay vì map đúng từng cột bảng đích:</strong> vì schema thật của
+        từng loại file SharePoint (sản phẩm, đơn hàng, báo cáo...) có thể khác nhau, mẫu trên dùng 1 bảng
+        staging chung (<code>sit_staging_raw</code>) lưu nguyên row dạng JSON — pattern này khớp với pattern
+        SIT-STT bạn đã làm ở Velocity Framework Exercise (watermark-based incremental load). Khi đã biết rõ
+        schema cố định cho 1 loại file cụ thể, có thể thêm bảng đích riêng và map cột trực tiếp thay cho JSON.
+      </div>
+
+      <h3 id="grant-insert"><span class="step-num">4</span>&nbsp; Cấp quyền INSERT cho Service Principal trên Warehouse</h3>
+      <p>
+        Đây là bước khắc phục lỗi phổ biến "INSERT permission denied" dù SPN đã connect được (connect thành
+        công chỉ chứng minh quyền đọc/kết nối, không tự động có quyền viết).
+      </p>
+      <ol>
+        <li>Kết nối tới Warehouse bằng 1 tài khoản Entra ID có quyền cao hơn (ví dụ tài khoản admin của bạn) qua SSMS hoặc Fabric Portal Query Editor.</li>
+        <li>Chạy script tạo user cho SPN và gán quyền:</li>
+      </ol>
+      <pre><code>-- Chạy trong Warehouse wh-vule-sonle-WWI-medallion
+CREATE USER [nrn-academy-spn-fabric-dev-{name}] FROM EXTERNAL PROVIDER;
+GO
+ALTER ROLE db_datareader ADD MEMBER [nrn-academy-spn-fabric-dev-{name}];
+ALTER ROLE db_datawriter ADD MEMBER [nrn-academy-spn-fabric-dev-{name}];
+GO</code></pre>
+      <div class="warn-box">
+        <strong>db_owner chỉ khi cần thiết:</strong> <code>db_datawriter</code> đủ cho INSERT/UPDATE/DELETE.
+        Tránh gán <code>db_owner</code> cho SPN nếu không cần quyền quản trị schema — giữ nguyên tắc least
+        privilege giống các phase trước (Storage Blob Data Reader/Contributor ở Phase 2).
+      </div>
+
+      <div class="phase-divider">
+        <span class="phase-tag">Task 3</span>
+      </div>
+      <h2 id="task3">📊 Task 3 — Consumer: Query dữ liệu thật từ Lakehouse</h2>
+      <p>
+        Cập nhật <code>ConsumerStub</code> (đã có từ Phase 3) — thay đoạn <code>resultPayload</code> placeholder
+        bằng truy vấn thật tới SQL analytics endpoint của Lakehouse <code>lh_vule_sonle_medallion</code>, dùng
+        cùng Service Principal đã tạo ở Task 1.
+      </p>
+
+      <h3 id="query-lakehouse"><span class="step-num">1</span>&nbsp; Lấy SQL connection string của Lakehouse</h3>
+      <ol>
+        <li>Vào workspace Fabric → mở <code>lh_vule_sonle_medallion</code> → tab <strong>SQL analytics endpoint</strong> (Lakehouse luôn có sẵn 1 SQL endpoint tự sinh, không cần tạo riêng).</li>
+        <li>Menu <strong>Settings</strong> → copy <strong>SQL connection string</strong>.</li>
+        <li>Đảm bảo SPN đã được cấp quyền <strong>Contributor</strong> trên cùng workspace ở Task 1.3 (Lakehouse và Warehouse dùng chung workspace nên không cần cấp quyền riêng lần 2, nếu đúng như bạn xác nhận ban đầu).</li>
+      </ol>
+
+      <h3 id="query-lakehouse-code"><span class="step-num">2</span>&nbsp; Cập nhật code Consumer</h3>
+      <ol>
+        <li>Thêm package SDK (nếu Function Consumer chưa có):</li>
+      </ol>
+      <pre><code>dotnet add package Microsoft.Data.SqlClient</code></pre>
+      <ol start="2">
+        <li>Thêm Application Settings cho Function Consumer (tương tự Adapter ở Task 2):
+          <ul>
+            <li><code>FabricClientId</code>, <code>FabricClientSecret</code>, <code>FabricTenantId</code> — từ App Registration ở Task 1.1.</li>
+            <li><code>LakehouseConnectionString</code> — connection string Lakehouse vừa lấy.</li>
+          </ul>
+        </li>
+      </ol>
+
+      <pre><code>// ConsumerStub.cs — Phase 4: query thật từ Lakehouse thay cho placeholder
+[Function("ConsumerStub")]
+public async Task Run(
+    [ServiceBusTrigger("nrn-academy-sbq-query-{name}", Connection = "ServiceBusConnection")]
+    string message,
+    FunctionContext context)
+{
+    _logger.LogInformation("Consumer dequeued message: {Message}", message);
+    var query = JsonSerializer.Deserialize&lt;QueryRequest&gt;(message);
+
+    // Phase 4: query thật từ Lakehouse Medallion (Gold layer), thay cho placeholder ở Phase 3.
+    var resultRows = await QueryLakehouseAsync(query?.RequestId);
+
+    var resultPayload = new
+    {
+        requestId = query?.RequestId,
+        status = "processed",
+        rowCount = resultRows.Count,
+        data = resultRows
+    };
+
+    await _emailSender.SendResultEmailAsync(query?.RecipientEmail, resultPayload);
+    await _pushSender.SendResultPushAsync(query?.DeviceTag, resultPayload);
+
+    _logger.LogInformation("Consumer finished processing requestId={RequestId}, rows={RowCount}",
+        query?.RequestId, resultRows.Count);
+}
+
+private async Task&lt;List&lt;Dictionary&lt;string, object&gt;&gt;&gt; QueryLakehouseAsync(string requestId)
+{
+    var results = new List&lt;Dictionary&lt;string, object&gt;&gt;();
+
+    using var connection = new SqlConnection(_lakehouseConnectionString);
+    await connection.OpenAsync();
+
+    using var cmd = connection.CreateCommand();
+    // Ví dụ: query Gold layer table theo điều kiện liên quan tới requestId.
+    // Điều chỉnh tên bảng/cột theo schema Gold thật trong lh_vule_sonle_medallion.
+    cmd.CommandText = "SELECT TOP 100 * FROM gold.fact_sales WHERE request_ref = @requestId";
+    cmd.Parameters.AddWithValue("@requestId", requestId);
+
+    using var reader = await cmd.ExecuteReaderAsync();
+    while (await reader.ReadAsync())
+    {
+        var row = new Dictionary&lt;string, object&gt;();
+        for (int i = 0; i &lt; reader.FieldCount; i++)
+            row[reader.GetName(i)] = reader.GetValue(i);
+        results.Add(row);
+    }
+    return results;
+}</code></pre>
+
+      <div class="note">
+        <strong>Schema Gold layer thật:</strong> tên bảng <code>gold.fact_sales</code> và cột
+        <code>request_ref</code> trong mẫu trên chỉ là ví dụ minh hoạ. Thay bằng tên bảng/view thật trong
+        Medallion Lakehouse của bạn (theo cấu trúc Bronze/Silver/Gold đã xây ở Velocity Framework Exercise) —
+        và điều chỉnh điều kiện <code>WHERE</code> theo cách <code>requestId</code> thực sự map tới dữ liệu cần
+        truy vấn (ví dụ theo khách hàng, theo khoảng thời gian, theo mã đơn hàng...).
+      </div>
+
+      <h3 id="grant-read-lakehouse"><span class="step-num">3</span>&nbsp; Cấp quyền đọc cho Service Principal trên Lakehouse</h3>
+      <p>
+        Khác với Warehouse (cần GRANT INSERT), Consumer chỉ cần đọc — quyền <strong>Contributor</strong> ở cấp
+        workspace (đã cấp ở Task 1.3) thường là đủ để SELECT qua SQL analytics endpoint. Nếu vẫn gặp lỗi
+        permission khi query, chạy thêm:
+      </p>
+      <pre><code>-- Chạy trong SQL analytics endpoint của lh_vule_sonle_medallion, nếu Contributor workspace-level chưa đủ
+CREATE USER [nrn-academy-spn-fabric-dev-{name}] FROM EXTERNAL PROVIDER;
+GO
+ALTER ROLE db_datareader ADD MEMBER [nrn-academy-spn-fabric-dev-{name}];
+GO</code></pre>
+
+      <div class="phase-divider">
+        <span class="phase-tag">Kiểm thử</span>
+      </div>
+      <h2 id="test">🧪 Kiểm thử end-to-end toàn kiến trúc</h2>
+
+      <h3>Flow 1 — Data Ingestion (đầy đủ)</h3>
+      <table>
+        <tr><th>Bước</th><th>Hành động</th><th>Kết quả mong đợi</th></tr>
+        <tr><td>1</td><td>Upload 1 file <strong>CSV hợp lệ</strong> vào SharePoint</td><td>Logic App → Storage → Event Grid → APIM → Adapter parse thành công → dữ liệu xuất hiện trong <code>dbo.sit_staging_raw</code> của Warehouse</td></tr>
+        <tr><td>2</td><td>Upload 1 file <strong>Excel (.xlsx) hợp lệ</strong></td><td>Tương tự CSV, parse bằng ClosedXML, ghi vào Warehouse</td></tr>
+        <tr><td>3</td><td>Upload 1 file <strong>PDF</strong> (loại không hỗ trợ)</td><td>Adapter log "unsupported file type", file được copy sang container <code>ingest-quarantine</code>, response vẫn <code>200 OK</code>, <strong>không</strong> có dòng nào ghi vào Warehouse</td></tr>
+        <tr><td>4</td><td>Query thử bảng <code>dbo.sit_staging_raw</code> qua Fabric Portal Query Editor</td><td>Thấy đúng số dòng tương ứng với file CSV/Excel đã upload, cột <code>raw_row_json</code> chứa đúng nội dung</td></tr>
+      </table>
+
+      <h3>Flow 2 — Query &amp; Notification (đầy đủ)</h3>
+      <table>
+        <tr><th>Bước</th><th>Hành động</th><th>Kết quả mong đợi</th></tr>
+        <tr><td>1</td><td>Gọi <code>POST /query/query</code> với <code>requestId</code> khớp dữ liệu thật trong Gold layer</td><td>Response <code>202</code>, Consumer dequeue, query Lakehouse trả về đúng số dòng</td></tr>
+        <tr><td>2</td><td>Kiểm tra email nhận được</td><td>Nội dung email chứa dữ liệu thật từ Lakehouse (không còn placeholder "Fabric query chưa triển khai")</td></tr>
+        <tr><td>3</td><td>Gọi với <code>requestId</code> không khớp dữ liệu nào</td><td>Consumer trả <code>rowCount: 0</code>, vẫn gửi email/push nhưng nội dung rõ "không có dữ liệu", không lỗi crash</td></tr>
+      </table>
+
+      <h3>Kiểm thử quyền (permission)</h3>
+      <table>
+        <tr><th>Bước</th><th>Hành động</th><th>Kết quả mong đợi</th></tr>
+        <tr><td>1</td><td>Tạm xoá role <code>db_datawriter</code> của SPN trên Warehouse</td><td>Adapter log lỗi "INSERT permission denied" — xác nhận RBAC tầng SQL đang thực sự kiểm soát</td></tr>
+        <tr><td>2</td><td>Gán lại quyền, thử lại bước 1</td><td>Ghi thành công trở lại</td></tr>
+      </table>
+
+      <div class="phase-divider">
+        <span class="phase-tag">Cost</span>
+      </div>
+      <h2 id="cost">💰 Cost Phase 4</h2>
+      <p>
+        Phase 4 <strong>không tạo thêm resource Azure mới</strong> (Service Principal là Microsoft Entra ID
+        object, không tính phí). Chi phí phát sinh chủ yếu liên quan tới <strong>Fabric capacity</strong> —
+        việc Warehouse/Lakehouse được query/ghi nhiều hơn sẽ tiêu thụ Capacity Unit (CU) của Fabric.
+      </p>
+
+      <h3 id="cost-table">📊 Bảng cost theo phần liên quan</h3>
+      <table>
+        <tr><th>Thành phần</th><th>Cơ chế tính tiền</th><th>Ảnh hưởng từ Phase 4</th></tr>
+        <tr>
+          <td><strong>Microsoft Entra ID App Registration / Service Principal</strong></td>
+          <td>Miễn phí — không tính phí theo object SPN.</td>
+          <td>$0.</td>
+        </tr>
+        <tr>
+          <td><strong>Fabric Capacity (chứa Warehouse + Lakehouse)</strong></td>
+          <td>Theo capacity SKU (F2 trở lên) đã có sẵn từ Velocity Framework Exercise — tính phí cố định/giờ theo CU đã mua, không tính riêng theo từng query.</td>
+          <td>Nếu capacity đã chạy sẵn cho Velocity Exercise, Phase 4 <strong>không phát sinh thêm cost mới</strong> — chỉ tiêu thụ thêm CU trong giới hạn capacity hiện có. Nếu khối lượng query/ghi tăng đột biến có thể gây throttling (không phải phụ phí, mà là chậm) khi vượt CU khả dụng.</td>
+        </tr>
+        <tr>
+          <td><strong>Storage Account (container ingest-quarantine mới)</strong></td>
+          <td>Theo GB lưu trữ + transaction, giống <code>ingest-relay</code> ở Phase 2.</td>
+          <td>Không đáng kể — vài file PDF test/tháng.</td>
+        </tr>
+        <tr>
+          <td><strong>Function App Adapter + Consumer</strong></td>
+          <td>Theo App Service Plan Consumption (không đổi từ phase trước).</td>
+          <td>Tăng nhẹ thời gian xử lý (GB-s) do thêm bước parse + query SQL, nhưng vẫn nằm trong free grant ở khối lượng test.</td>
+        </tr>
+      </table>
+
+      <div class="total-banner">
+        <div class="big">≈ $0 cost mới phát sinh (nếu Fabric capacity đã sẵn có)</div>
+        <div class="small">
+          Vì Warehouse và Lakehouse đã tồn tại từ trước (Velocity Framework Exercise), Phase 4 chủ yếu là công
+          việc tích hợp code/permission, không tạo thêm resource billable mới. Rủi ro cost duy nhất cần theo
+          dõi là nếu khối lượng query/ghi tăng cao bất thường khiến capacity Fabric hiện có không đủ đáp ứng,
+          dẫn tới cân nhắc nâng SKU capacity (F2 → F4...) — nên theo dõi Fabric Capacity Metrics App trong
+          Portal nếu nghi ngờ throttling.
+        </div>
+      </div>
+
+      <h3 id="cost-guardrails">🛡️ Guardrail bổ sung cho Phase 4</h3>
+      <ol>
+        <li><strong>Đặt expiry hợp lý cho client secret</strong> của Service Principal (6–12 tháng) và ghi lại ngày hết hạn — secret hết hạn sẽ làm toàn bộ Adapter + Consumer mất kết nối Fabric đột ngột, không phải lỗi cost nhưng là rủi ro vận hành cần theo dõi.</li>
+        <li><strong>Theo dõi Fabric Capacity Metrics App</strong> (có sẵn trong mọi tenant Fabric) định kỳ — nếu CU usage thường xuyên chạm 100%, đó là dấu hiệu cần nâng capacity SKU (phát sinh cost thật) trước khi pipeline bị throttle.</li>
+        <li><strong>Dọn dẹp container <code>ingest-quarantine</code></strong> định kỳ giống <code>ingest-relay</code> — đặt lifecycle policy tương tự đã làm ở Phase 2.</li>
+        <li><strong>Giới hạn quyền SPN ở mức db_datareader/db_datawriter</strong>, không gán db_owner — tránh rủi ro SPN bị lợi dụng để thay đổi schema ngoài ý muốn.</li>
+      </ol>
+
+      <div class="phase-divider">
+        <span class="phase-tag">Checklist toàn kiến trúc</span>
+      </div>
+      <h2 id="checklist">✅ Checklist Phase 4 &amp; tổng kết toàn kiến trúc</h2>
+
+      <h3>Checklist Phase 4</h3>
+      <ul class="checklist">
+        <li>Đã tạo App Registration <code>nrn-academy-spn-fabric-dev-{name}</code>, lưu Client ID/Secret/Tenant ID.</li>
+        <li>Đã bật "Service principals can use Fabric APIs" trong Fabric Admin Portal.</li>
+        <li>Đã gán role Contributor cho SPN trên workspace chứa Warehouse + Lakehouse.</li>
+        <li>Đã GRANT <code>db_datareader</code> + <code>db_datawriter</code> cho SPN trên Warehouse <code>wh-vule-sonle-WWI-medallion</code>.</li>
+        <li>Data Lake Adapter: đã detect đúng loại file, parse CSV/Excel thật, quarantine file không hỗ trợ (PDF...), ghi dữ liệu vào Warehouse.</li>
+        <li>Consumer: đã query dữ liệu thật từ Lakehouse <code>lh_vule_sonle_medallion</code>, đưa vào nội dung Email/Push.</li>
+        <li>Đã test cả 2 nhánh file (CSV/Excel hợp lệ và PDF bị quarantine).</li>
+        <li>Đã test permission: tạm xoá quyền SPN để xác nhận RBAC thật đang hoạt động.</li>
+      </ul>
+
+      <h3>Tổng kết: toàn bộ kiến trúc đã hoàn chỉnh</h3>
+      <p>Với Phase 4 hoàn tất, cả 2 flow trong <code>architecture.md</code> đã được triển khai đầy đủ:</p>
+      <table>
+        <tr><th>Flow</th><th>Thành phần</th><th>Trạng thái</th></tr>
+        <tr><td rowspan="6">Flow 1 — Data Ingestion</td><td>SharePoint → Logic App (trigger)</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 1)</span></td></tr>
+        <tr><td>Logic App → Storage Account (workaround SharePoint permission)</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 2)</span></td></tr>
+        <tr><td>Event Grid → APIM → Data Lake Adapter</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 1)</span></td></tr>
+        <tr><td>Data Lake Adapter parse CSV/Excel + quarantine file khác</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 4)</span></td></tr>
+        <tr><td>Ghi vào SQL SIT/STT (Fabric Warehouse)</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 4)</span></td></tr>
+        <tr><td>Logging Adapter (audit trail)</td><td><span class="badge-outofscope service-badge">Chưa làm — ngoài phạm vi 4 phase</span></td></tr>
+        <tr><td rowspan="5">Flow 2 — Query &amp; Notification</td><td>External System → APIM → Publisher → Service Bus</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 3)</span></td></tr>
+        <tr><td>Consumer dequeue từ Service Bus (hướng mũi tên đã sửa)</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 3)</span></td></tr>
+        <tr><td>Consumer query Microsoft Fabric Lakehouse</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 4)</span></td></tr>
+        <tr><td>Gửi Email thật (Azure Communication Services)</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 3)</span></td></tr>
+        <tr><td>Gửi Push thật (Azure Notification Hubs)</td><td><span class="badge-fabric service-badge">✓ Hoàn thành (Phase 3, chờ app client đăng ký device)</span></td></tr>
+      </table>
+
+      <div class="note">
+        <strong>Phần còn lại ngoài 4 phase này:</strong> Logging Adapter (audit trail cho Flow 1) là thành
+        phần duy nhất trong <code>architecture.md</code> chưa được triển khai qua 4 phase. Có thể bổ sung như
+        1 phase phụ nếu cần đầy đủ observability — về kỹ thuật khá đơn giản (1 Function nhận event từ Event
+        Grid subscription thứ 2, chỉ ghi log/Application Insights), không ảnh hưởng tới luồng dữ liệu chính đã
+        hoàn chỉnh ở Phase 4.
+      </div>
+
+    </div>
+
+    <footer>
+      Tài liệu tạo cho nrn-academy Velocity Framework Exercise — Phase 4 (cuối), kết nối Data Lake Adapter vào
+      Fabric Warehouse và Consumer vào Fabric Lakehouse, hoàn thiện toàn bộ kiến trúc tích hợp theo
+      <code>architecture.md</code>.<br>
+      Giá Azure/Fabric thay đổi theo thời gian/khu vực — luôn double-check trong Azure Pricing Calculator và
+      Fabric Capacity Metrics App trước khi quyết định nâng cấp tier/SKU production.
+    </footer>
+
+  </main>
+</div>
+</body>
+</html>
