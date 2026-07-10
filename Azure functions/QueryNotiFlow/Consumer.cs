@@ -220,6 +220,7 @@ public class Consumer
 
             var subject = $"Query Results — nrn-academy Gold Layer{(requestId != null ? $" [{requestId}]" : "")}";
 
+            // styling result for a more readable result
             var htmlContent = $@"<html>
 <body style='font-family: Segoe UI, -apple-system, sans-serif; color: #333; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 24px;'>
     <h2 style='color: #0078d4; margin-bottom: 4px;'>Fabric Lakehouse Query Results</h2>
