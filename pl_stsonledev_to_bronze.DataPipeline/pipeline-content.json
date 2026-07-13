@@ -5,13 +5,18 @@
         "type": "GetMetadata",
         "typeProperties": {
           "datasetSettings": {
-            "type": "Binary",
+            "type": "DelimitedText",
             "typeProperties": {
               "location": {
                 "type": "AzureBlobStorageLocation",
                 "container": "staging"
-              }
+              },
+              "columnDelimiter": ",",
+              "quoteChar": "\"",
+              "escapeChar": "\\",
+              "firstRowAsHeader": true
             },
+            "schema": [],
             "externalReferences": {
               "connection": "2fe3f21d-c4e8-4ee6-90e5-153d9bd3e246"
             },
@@ -22,10 +27,11 @@
           ],
           "storeSettings": {
             "type": "AzureBlobStorageReadSettings",
+            "recursive": true,
             "enablePartitionDiscovery": false
           },
           "formatSettings": {
-            "type": "BinaryReadSettings"
+            "type": "DelimitedTextReadSettings"
           }
         },
         "policy": {
@@ -90,7 +96,7 @@
                     "enableVertiParquet": true
                   },
                   "storeSettings": {
-                    "type": "LakehouseWriteSettings",
+                    "type": "AzureBlobStorageWriteSettings",
                     "copyBehavior": "MergeFiles"
                   },
                   "datasetSettings": {
@@ -99,7 +105,7 @@
                       "location": {
                         "type": "LakehouseLocation",
                         "folderPath": {
-                          "value": "@concat('Bronze/Sharepoint/', split(item().name, '_')[0], '_', split(item().name, '_')[1], '/year=', substring(split(split(item().name, '.')[0], '_')[2], 0, 4), '/month=', substring(split(split(item().name, '.')[0], '_')[2], 4, 2), '/day=', substring(split(split(item().name, '.')[0], '_')[2], 6, 2))",
+                          "value": "@concat('Bronze/SharePoint/', split(item().name, '_')[0], '_', split(item().name, '_')[1], '/year=', substring(split(split(item().name, '.')[0], '_')[2], 0, 4), '/month=', substring(split(split(item().name, '.')[0], '_')[2], 4, 2), '/day=', substring(split(split(item().name, '.')[0], '_')[2], 6, 2))",
                           "type": "Expression"
                         },
                         "fileName": {
@@ -193,7 +199,7 @@
             }
           ]
         },
-        "name": "ForEach1",
+        "name": "file_loop",
         "dependsOn": [
           {
             "activity": "Get_Metadata_Staging",
