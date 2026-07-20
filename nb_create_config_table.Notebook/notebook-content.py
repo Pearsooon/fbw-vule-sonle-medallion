@@ -522,6 +522,9 @@ schema = StructType([
     StructField("business_key", StringType(), True),
     StructField("column_list", StringType(), True),
     StructField("is_active", BooleanType(), True),
+    StructField("source_name", StringType(), True),
+    StructField("connection", StringType(), True),
+    StructField("config", StringType(), True),
 ])
 
 # ---- Định nghĩa dữ liệu gốc cho Silver (và Bronze) ----
@@ -639,9 +642,31 @@ for item in base_rows:
         watermark_column=item["watermark_column"],
         business_key=item["business_key"],
         column_list=item["column_list"],
-        is_active=True
+        is_active=True,
+        source_name="WWI_Warehouse",
+        connection="",
+        config="{}"
     ))
     config_id += 1
+
+# Thêm cấu hình mẫu cho nguồn SharePoint
+all_rows.append(Row(
+    config_id=config_id,
+    layer="Bronze",
+    source_system="SharePoint",
+    source_schema=None,
+    source_table="Employee",
+    source_object="SharePoint_Employee",
+    load_type="full",
+    watermark_column=None,
+    business_key="EmployeeID",
+    column_list="*",
+    is_active=True,
+    source_name="SharePoint_ERP",
+    connection="@variables('storage-account')",
+    config='{"container": "staging", "format": "csv"}'
+))
+config_id += 1
 
 # 2. Silver rows (6 rows) - identical column_list
 for item in base_rows:
@@ -656,7 +681,10 @@ for item in base_rows:
         watermark_column=item["watermark_column"],
         business_key=item["business_key"],
         column_list=item["column_list"],
-        is_active=True
+        is_active=True,
+        source_name="WWI_Warehouse",
+        connection="",
+        config="{}"
     ))
     config_id += 1
 
@@ -752,7 +780,10 @@ for item in gold_configs:
         watermark_column=item["watermark_column"],
         business_key=item["business_key"],
         column_list=item["column_list"],
-        is_active=True
+        is_active=True,
+        source_name="WWI_Warehouse",
+        connection="",
+        config="{}"
     ))
     config_id += 1
 
