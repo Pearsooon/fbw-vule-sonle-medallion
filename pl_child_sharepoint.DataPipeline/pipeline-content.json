@@ -1,0 +1,236 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "GetMetadata",
+        "typeProperties": {
+          "datasetSettings": {
+            "type": "DelimitedText",
+            "typeProperties": {
+              "location": {
+                "type": "AzureBlobStorageLocation",
+                "container": "staging",
+                "folderPath": {
+                  "value": "@json(pipeline().parameters.config.config).folder",
+                  "type": "Expression"
+                }
+              },
+              "columnDelimiter": ",",
+              "quoteChar": "\"",
+              "escapeChar": "\\\\",
+              "firstRowAsHeader": true
+            },
+            "externalReferences": {
+              "connection": "@variables('storage-account')"
+            },
+            "annotations": []
+          },
+          "fieldList": [
+            "childItems"
+          ],
+          "storeSettings": {
+            "type": "AzureBlobStorageReadSettings",
+            "recursive": true,
+            "enablePartitionDiscovery": false
+          },
+          "formatSettings": {
+            "type": "DelimitedTextReadSettings"
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Get_Metadata_Staging",
+        "dependsOn": []
+      },
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "isSequential": true,
+          "items": {
+            "value": "@activity('Get_Metadata_Staging').output.childItems",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "Copy",
+              "typeProperties": {
+                "source": {
+                  "type": "DelimitedTextSource",
+                  "formatSettings": {
+                    "type": "DelimitedTextReadSettings"
+                  },
+                  "storeSettings": {
+                    "type": "AzureBlobStorageReadSettings",
+                    "recursive": false,
+                    "enablePartitionDiscovery": false
+                  },
+                  "datasetSettings": {
+                    "type": "DelimitedText",
+                    "typeProperties": {
+                      "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "container": "staging",
+                        "folderPath": {
+                          "value": "@json(pipeline().parameters.config.config).folder",
+                          "type": "Expression"
+                        },
+                        "fileName": {
+                          "value": "@item().name",
+                          "type": "Expression"
+                        }
+                      },
+                      "columnDelimiter": ",",
+                      "quoteChar": "\"",
+                      "escapeChar": "\\\\",
+                      "firstRowAsHeader": true
+                    },
+                    "schema": [],
+                    "externalReferences": {
+                      "connection": "@variables('storage-account')"
+                    },
+                    "annotations": []
+                  }
+                },
+                "sink": {
+                  "type": "ParquetSink",
+                  "formatSettings": {
+                    "type": "ParquetWriteSettings",
+                    "enableVertiParquet": true
+                  },
+                  "storeSettings": {
+                    "type": "AzureBlobStorageWriteSettings",
+                    "copyBehavior": "MergeFiles"
+                  },
+                  "datasetSettings": {
+                    "type": "Parquet",
+                    "typeProperties": {
+                      "location": {
+                        "type": "LakehouseLocation",
+                        "folderPath": {
+                          "value": "@concat('Bronze/SharePoint/', split(item().name, '_')[0], '_', split(item().name, '_')[1], '/year=', substring(split(split(item().name, '.')[0], '_')[2], 0, 4), '/month=', substring(split(split(item().name, '.')[0], '_')[2], 4, 2), '/day=', substring(split(split(item().name, '.')[0], '_')[2], 6, 2))",
+                          "type": "Expression"
+                        },
+                        "fileName": {
+                          "value": "@concat(split(item().name, '_')[1], '_', formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'), '.parquet')",
+                          "type": "Expression"
+                        }
+                      },
+                      "compressionCodec": "snappy"
+                    },
+                    "schema": [],
+                    "linkedService": {
+                      "name": "lh_vule_sonle_medallion",
+                      "properties": {
+                        "type": "Lakehouse",
+                        "typeProperties": {
+                          "artifactId": "babe97ee-fffd-a645-4344-dd57ad85bd8b",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000",
+                          "rootFolder": "Files"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "annotations": []
+                  }
+                },
+                "translator": {
+                  "type": "TabularTranslator",
+                  "typeConversion": true,
+                  "typeConversionSettings": {
+                    "allowDataTruncation": true,
+                    "treatBooleanAsNumber": false
+                  }
+                },
+                "enableStaging": false
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "Copy data",
+              "description": "Copy data from storage account (staging) to Bronze",
+              "dependsOn": []
+            },
+            {
+              "type": "Delete",
+              "typeProperties": {
+                "enableLogging": false,
+                "datasetSettings": {
+                  "type": "Binary",
+                  "typeProperties": {
+                    "location": {
+                      "type": "AzureBlobStorageLocation",
+                      "container": "staging",
+                      "folderPath": {
+                        "value": "@json(pipeline().parameters.config.config).folder",
+                        "type": "Expression"
+                      },
+                      "fileName": {
+                        "value": "@item().name",
+                        "type": "Expression"
+                      }
+                    }
+                  },
+                  "externalReferences": {
+                    "connection": "@variables('storage-account')"
+                  },
+                  "annotations": []
+                },
+                "storeSettings": {
+                  "type": "AzureBlobStorageReadSettings",
+                  "recursive": false,
+                  "enablePartitionDiscovery": false
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "Delete data",
+              "description": "Delete data after file load into Bronze successfully",
+              "dependsOn": [
+                {
+                  "activity": "Copy data",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "name": "file_loop",
+        "dependsOn": [
+          {
+            "activity": "Get_Metadata_Staging",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "config": {
+        "type": "object"
+      }
+    },
+    "variables": {
+      "storage-account": {
+        "type": "String",
+        "defaultValue": "https://stsonledev.blob.core.windows.net/"
+      }
+    }
+  }
+}

@@ -664,7 +664,7 @@ all_rows.append(Row(
     is_active=True,
     source_name="SharePoint_ERP",
     connection="@variables('storage-account')",
-    config='{"container": "staging", "format": "csv"}'
+    config='{"container": "staging", "format": "csv", "folder": "SharePoint A"}'
 ))
 config_id += 1
 
