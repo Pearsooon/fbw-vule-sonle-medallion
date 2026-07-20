@@ -4,20 +4,6 @@
       {
         "type": "Lookup",
         "typeProperties": {
-<<<<<<< Updated upstream
-          "datasetSettings": {
-            "type": "DelimitedText",
-            "typeProperties": {
-              "location": {
-                "type": "AzureBlobStorageLocation",
-                "container": "staging"
-              },
-              "columnDelimiter": ",",
-              "quoteChar": "\"",
-              "escapeChar": "\\",
-              "firstRowAsHeader": true
-            },
-=======
           "source": {
             "type": "SqlServerSource",
             "sqlReaderQuery": {
@@ -29,28 +15,13 @@
           },
           "datasetSettings": {
             "type": "SqlServerTable",
->>>>>>> Stashed changes
             "schema": [],
             "externalReferences": {
               "connection": "d92f2169-04bc-42f0-bbc1-f5827e7c4517"
             },
             "annotations": []
           },
-<<<<<<< Updated upstream
-          "fieldList": [
-            "childItems"
-          ],
-          "storeSettings": {
-            "type": "AzureBlobStorageReadSettings",
-            "recursive": true,
-            "enablePartitionDiscovery": false
-          },
-          "formatSettings": {
-            "type": "DelimitedTextReadSettings"
-          }
-=======
           "firstRowOnly": false
->>>>>>> Stashed changes
         },
         "policy": {
           "timeout": "0.12:00:00",
@@ -77,46 +48,12 @@
                   "value": "@item().source_system",
                   "type": "Expression"
                 },
-<<<<<<< Updated upstream
-                "sink": {
-                  "type": "ParquetSink",
-                  "formatSettings": {
-                    "type": "ParquetWriteSettings",
-                    "enableVertiParquet": true
-                  },
-                  "storeSettings": {
-                    "type": "AzureBlobStorageWriteSettings",
-                    "copyBehavior": "MergeFiles"
-                  },
-                  "datasetSettings": {
-                    "type": "Parquet",
-                    "typeProperties": {
-                      "location": {
-                        "type": "LakehouseLocation",
-                        "folderPath": {
-                          "value": "@concat('Bronze/SharePoint/', split(item().name, '_')[0], '_', split(item().name, '_')[1], '/year=', substring(split(split(item().name, '.')[0], '_')[2], 0, 4), '/month=', substring(split(split(item().name, '.')[0], '_')[2], 4, 2), '/day=', substring(split(split(item().name, '.')[0], '_')[2], 6, 2))",
-                          "type": "Expression"
-                        },
-                        "fileName": {
-                          "value": "@concat(split(item().name, '_')[1], '_', formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'), '.parquet')",
-                          "type": "Expression"
-                        }
-                      },
-                      "compressionCodec": "snappy"
-                    },
-                    "schema": [],
-                    "linkedService": {
-                      "name": "lh_vule_sonle_medallion",
-                      "properties": {
-                        "type": "Lakehouse",
-=======
                 "cases": [
                   {
                     "value": "WWI",
                     "activities": [
                       {
                         "type": "IfCondition",
->>>>>>> Stashed changes
                         "typeProperties": {
                           "expression": {
                             "value": "@equals(item().load_type, 'full')",
@@ -476,12 +413,16 @@
                         "type": "GetMetadata",
                         "typeProperties": {
                           "datasetSettings": {
-                            "type": "Binary",
+                            "type": "DelimitedText",
                             "typeProperties": {
                               "location": {
                                 "type": "AzureBlobStorageLocation",
                                 "container": "staging"
-                              }
+                              },
+                              "columnDelimiter": ",",
+                              "quoteChar": "\"",
+                              "escapeChar": "\\\\",
+                              "firstRowAsHeader": true
                             },
                             "externalReferences": {
                               "connection": "@variables('storage-account')"
@@ -493,10 +434,11 @@
                           ],
                           "storeSettings": {
                             "type": "AzureBlobStorageReadSettings",
+                            "recursive": true,
                             "enablePartitionDiscovery": false
                           },
                           "formatSettings": {
-                            "type": "BinaryReadSettings"
+                            "type": "DelimitedTextReadSettings"
                           }
                         },
                         "policy": {
@@ -544,7 +486,7 @@
                                       },
                                       "columnDelimiter": ",",
                                       "quoteChar": "\"",
-                                      "escapeChar": "\\",
+                                      "escapeChar": "\\\\",
                                       "firstRowAsHeader": true
                                     },
                                     "schema": [],
@@ -561,7 +503,7 @@
                                     "enableVertiParquet": true
                                   },
                                   "storeSettings": {
-                                    "type": "LakehouseWriteSettings",
+                                    "type": "AzureBlobStorageWriteSettings",
                                     "copyBehavior": "MergeFiles"
                                   },
                                   "datasetSettings": {
@@ -570,7 +512,7 @@
                                       "location": {
                                         "type": "LakehouseLocation",
                                         "folderPath": {
-                                          "value": "@concat('Bronze/Sharepoint/', split(item().name, '_')[0], '_', split(item().name, '_')[1], '/year=', substring(split(split(item().name, '.')[0], '_')[2], 0, 4), '/month=', substring(split(split(item().name, '.')[0], '_')[2], 4, 2), '/day=', substring(split(split(item().name, '.')[0], '_')[2], 6, 2))",
+                                          "value": "@concat('Bronze/SharePoint/', split(item().name, '_')[0], '_', split(item().name, '_')[1], '/year=', substring(split(split(item().name, '.')[0], '_')[2], 0, 4), '/month=', substring(split(split(item().name, '.')[0], '_')[2], 4, 2), '/day=', substring(split(split(item().name, '.')[0], '_')[2], 6, 2))",
                                           "type": "Expression"
                                         },
                                         "fileName": {
@@ -664,7 +606,7 @@
                             }
                           ]
                         },
-                        "name": "ForEach1",
+                        "name": "file_loop",
                         "dependsOn": [
                           {
                             "activity": "Get_Metadata_Staging",
@@ -683,11 +625,7 @@
             }
           ]
         },
-<<<<<<< Updated upstream
-        "name": "file_loop",
-=======
         "name": "Table_loop",
->>>>>>> Stashed changes
         "dependsOn": [
           {
             "activity": "Get_config",
